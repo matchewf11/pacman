@@ -1,7 +1,7 @@
-async function downloadAssets(assetPaths) {
+async function downloadAssets(paths) {
   const cache = {};
 
-  const promises = assetPaths.map((path) => {
+  const promises = paths.map((path) => {
     return new Promise((resolve, reject) => {
       const img = new Image();
       img.addEventListener("load", () => {
