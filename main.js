@@ -1,91 +1,104 @@
+// Enum for the type of tile
+const Tile = {
+  WALL: 0,
+  FLOOR: 1,
+  PELLET: 2,
+  POWER: 3,
+  CHERRY: 4,
+};
+
 function newGameState() {
-  return {};
+  return {
+    grid: [
+      [
+        Tile.WALL,
+        Tile.WALL,
+        Tile.WALL,
+        Tile.WALL,
+        Tile.WALL,
+        Tile.WALL,
+        Tile.WALL,
+        Tile.WALL,
+      ],
+      [
+        Tile.WALL,
+        Tile.FLOOR,
+        Tile.PELLET,
+        Tile.PELLET,
+        Tile.PELLET,
+        Tile.PELLET,
+        Tile.CHERRY,
+        Tile.WALL,
+      ],
+      [
+        Tile.WALL,
+        Tile.PELLET,
+        Tile.WALL,
+        Tile.WALL,
+        Tile.WALL,
+        Tile.WALL,
+        Tile.PELLET,
+        Tile.WALL,
+      ],
+      [
+        Tile.WALL,
+        Tile.PELLET,
+        Tile.PELLET,
+        Tile.POWER,
+        Tile.PELLET,
+        Tile.PELLET,
+        Tile.PELLET,
+        Tile.WALL,
+      ],
+      [
+        Tile.WALL,
+        Tile.WALL,
+        Tile.WALL,
+        Tile.WALL,
+        Tile.WALL,
+        Tile.WALL,
+        Tile.WALL,
+        Tile.WALL,
+      ],
+    ],
+  };
 }
 
-function updateGame(input, gameState) {
-  console.log("update state");
-  // function newMaze() {
-  //   const Tile = {
-  //     WALL: 0,
-  //     FLOOR: 1,
-  //     PELLET: 2,
-  //     POWER: 3,
-  //     CHERRY: 4,
-  //   };
-  //
-  //   const grid = [
-  //     [0, 0, 0, 0, 0, 0, 0, 0],
-  //     [0, 1, 2, 2, 2, 2, 4, 0],
-  //     [0, 2, 0, 0, 0, 0, 2, 0],
-  //     [0, 2, 2, 3, 2, 2, 2, 0],
-  //     [0, 0, 0, 0, 0, 0, 0, 0],
-  //   ];
-  //
-  //   return {
-  //     Tile,
-  //     grid,
-  //     draw: (ctx) => {
-  //       const tileWidth = ctx.canvas.width / grid[0].length;
-  //       const tileHeight = ctx.canvas.height / grid.length;
-  //       for (let y = 0; y < grid.length; y++) {
-  //         for (let x = 0; x < grid[y].length; x++) {
-  //           switch (grid[y][x]) {
-  //             case Tile.WALL:
-  //               ctx.fillStyle = "navy";
-  //               ctx.fillRect(
-  //                 x * tileWidth,
-  //                 y * tileHeight,
-  //                 tileWidth,
-  //                 tileHeight,
-  //               );
-  //               break;
-  //             case Tile.CHERRY:
-  //               ctx.fillStyle = "red";
-  //               ctx.fillRect(
-  //                 x * tileWidth,
-  //                 y * tileHeight,
-  //                 tileWidth,
-  //                 tileHeight,
-  //               );
-  //               break;
-  //             case Tile.FLOOR:
-  //               ctx.fillStyle = "black";
-  //               ctx.fillRect(
-  //                 x * tileWidth,
-  //                 y * tileHeight,
-  //                 tileWidth,
-  //                 tileHeight,
-  //               );
-  //               break;
-  //             case Tile.PELLET:
-  //               ctx.fillStyle = "yellow";
-  //               ctx.fillRect(
-  //                 x * tileWidth,
-  //                 y * tileHeight,
-  //                 tileWidth,
-  //                 tileHeight,
-  //               );
-  //               break;
-  //             case Tile.POWER:
-  //               ctx.fillStyle = "green";
-  //               ctx.fillRect(
-  //                 x * tileWidth,
-  //                 y * tileHeight,
-  //                 tileWidth,
-  //                 tileHeight,
-  //               );
-  //               break;
-  //           }
-  //         }
-  //       }
-  //     },
-  //     update: (_) => {},
-  //   };
-  // }
-}
+function updateGame(gameState, input) {}
 
-function drawGame(gameState) {
-  console.log("draw state");
+function drawGame(gameState, ctx) {
+  // draw maze
+  const tileWidth = ctx.canvas.width / gameState.grid[0].length;
+  const tileHeight = ctx.canvas.height / gameState.grid.length;
+  for (let y = 0; y < gameState.grid.length; y++) {
+    for (let x = 0; x < gameState.grid[y].length; x++) {
+      switch (gameState.grid[y][x]) {
+        case Tile.WALL:
+          ctx.fillStyle = "navy";
+          ctx.fillRect(x * tileWidth, y * tileHeight, tileWidth, tileHeight);
+          break;
+        case Tile.CHERRY:
+          ctx.fillStyle = "red";
+          ctx.fillRect(x * tileWidth, y * tileHeight, tileWidth, tileHeight);
+          break;
+        case Tile.FLOOR:
+          ctx.fillStyle = "black";
+          ctx.fillRect(x * tileWidth, y * tileHeight, tileWidth, tileHeight);
+          break;
+        case Tile.PELLET:
+          ctx.fillStyle = "yellow";
+          ctx.fillRect(x * tileWidth, y * tileHeight, tileWidth, tileHeight);
+          break;
+        case Tile.POWER:
+          ctx.fillStyle = "green";
+          ctx.fillRect(x * tileWidth, y * tileHeight, tileWidth, tileHeight);
+          break;
+      }
+    }
+  }
+
+  // draw ghosts
+  // draw pacman
 }
 
 async function downloadAssets(paths) {
@@ -139,11 +152,11 @@ function startGame(ctx) {
 
   const loop = () => {
     // update game
-    updateGame(input, gameState);
+    updateGame(gameState, input);
 
     // draw game
     ctx.clearRect(0, 0, ctx.canvas.width, ctx.canvas.height);
-    drawGame(gameState);
+    drawGame(gameState, ctx);
 
     // loop
     requestAnimationFrame(loop);
