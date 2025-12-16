@@ -1,10 +1,16 @@
-// Enum for the type of tile
 const Tile = {
   WALL: 0,
   FLOOR: 1,
   PELLET: 2,
   POWER: 3,
   CHERRY: 4,
+};
+
+const Dir = {
+  LEFT: 0,
+  RIGHT: 1,
+  UP: 2,
+  DOWN: 3,
 };
 
 function newGameState() {
@@ -61,18 +67,66 @@ function newGameState() {
         Tile.WALL,
       ],
     ],
+    pacman: { x: 1, y: 1, dir: Dir.RIGHT },
   };
 }
 
-function updateGame(gameState, input) {}
+function updateGame(gameState, input, update) {
+  // if no update only update pacman direction
+
+  const { grid, pacman } = gameState;
+  const { left, right, up, down } = input;
+
+  if (left) {
+    pacman.dir = Dir.LEFT;
+  } else if (right) {
+    pacman.dir = Dir.RIGHT;
+  } else if (up) {
+    pacman.dir = Dir.UP;
+  } else if (down) {
+    pacman.dir = Dir.DOWN;
+  }
+
+  // do not let it move into wall
+  // pick up everything else and turn it into floor
+  if (update) {
+    switch (pacman.dir) {
+      case Dir.LEFT:
+        if (grid[pacman.y][pacman.x - 1] !== Tile.WALL) {
+          pacman.x -= 1;
+        }
+        break;
+      case Dir.RIGHT:
+        if (grid[pacman.y][pacman.x + 1] !== Tile.WALL) {
+          pacman.x += 1;
+        }
+        break;
+      case Dir.UP:
+        if (grid[pacman.y - 1][pacman.x] !== Tile.WALL) {
+          pacman.y -= 1;
+        }
+        break;
+      case Dir.DOWN:
+        if (grid[pacman.y + 1][pacman.x] !== Tile.WALL) {
+          pacman.y += 1;
+        }
+        break;
+    }
+  }
+
+  // if pacman is on a (pellet, cherry, or powerup) pick it up
+  grid[pacman.y][pacman.x] = Tile.FLOOR;
+}
 
 function drawGame(gameState, ctx) {
+  const { grid, pacman } = gameState;
+
   // draw maze
-  const tileWidth = ctx.canvas.width / gameState.grid[0].length;
-  const tileHeight = ctx.canvas.height / gameState.grid.length;
-  for (let y = 0; y < gameState.grid.length; y++) {
-    for (let x = 0; x < gameState.grid[y].length; x++) {
-      switch (gameState.grid[y][x]) {
+  const tileWidth = ctx.canvas.width / grid[0].length;
+  const tileHeight = ctx.canvas.height / grid.length;
+  for (let y = 0; y < grid.length; y++) {
+    for (let x = 0; x < grid[y].length; x++) {
+      switch (grid[y][x]) {
         case Tile.WALL:
           ctx.fillStyle = "navy";
           ctx.fillRect(x * tileWidth, y * tileHeight, tileWidth, tileHeight);
@@ -97,8 +151,13 @@ function drawGame(gameState, ctx) {
     }
   }
 
-  // draw ghosts
-  // draw pacman
+  ctx.fillStyle = "yellow";
+  ctx.fillRect(
+    pacman.x * tileWidth,
+    pacman.y * tileHeight,
+    tileWidth / 2,
+    tileHeight / 2,
+  );
 }
 
 async function downloadAssets(paths) {
@@ -127,14 +186,13 @@ async function downloadAssets(paths) {
 }
 
 function startGame(ctx) {
+  const gameState = newGameState();
   const input = {
     left: false,
     right: false,
     up: false,
     down: false,
   };
-
-  const gameState = newGameState();
 
   // set up input
   window.addEventListener("keydown", (e) => {
@@ -150,9 +208,17 @@ function startGame(ctx) {
     if (e.code === "KeyS") input.down = false;
   });
 
-  const loop = () => {
+  const speed = 500; // increase to slow down game
+  let lastUpdate = performance.now();
+
+  const loop = (currentTime) => {
     // update game
-    updateGame(gameState, input);
+    if (currentTime - lastUpdate >= speed) {
+      updateGame(gameState, input, true);
+      lastUpdate = currentTime;
+    } else {
+      updateGame(gameState, input, false);
+    }
 
     // draw game
     ctx.clearRect(0, 0, ctx.canvas.width, ctx.canvas.height);
