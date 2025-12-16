@@ -1,3 +1,82 @@
+// function newMaze() {
+//   const Tile = {
+//     WALL: 0,
+//     FLOOR: 1,
+//     PELLET: 2,
+//     POWER: 3,
+//     CHERRY: 4,
+//   };
+//
+//   const grid = [
+//     [0, 0, 0, 0, 0, 0, 0, 0],
+//     [0, 1, 2, 2, 2, 2, 4, 0],
+//     [0, 2, 0, 0, 0, 0, 2, 0],
+//     [0, 2, 2, 3, 2, 2, 2, 0],
+//     [0, 0, 0, 0, 0, 0, 0, 0],
+//   ];
+//
+//   return {
+//     Tile,
+//     grid,
+//     draw: (ctx) => {
+//       const tileWidth = ctx.canvas.width / grid[0].length;
+//       const tileHeight = ctx.canvas.height / grid.length;
+//       for (let y = 0; y < grid.length; y++) {
+//         for (let x = 0; x < grid[y].length; x++) {
+//           switch (grid[y][x]) {
+//             case Tile.WALL:
+//               ctx.fillStyle = "navy";
+//               ctx.fillRect(
+//                 x * tileWidth,
+//                 y * tileHeight,
+//                 tileWidth,
+//                 tileHeight,
+//               );
+//               break;
+//             case Tile.CHERRY:
+//               ctx.fillStyle = "red";
+//               ctx.fillRect(
+//                 x * tileWidth,
+//                 y * tileHeight,
+//                 tileWidth,
+//                 tileHeight,
+//               );
+//               break;
+//             case Tile.FLOOR:
+//               ctx.fillStyle = "black";
+//               ctx.fillRect(
+//                 x * tileWidth,
+//                 y * tileHeight,
+//                 tileWidth,
+//                 tileHeight,
+//               );
+//               break;
+//             case Tile.PELLET:
+//               ctx.fillStyle = "yellow";
+//               ctx.fillRect(
+//                 x * tileWidth,
+//                 y * tileHeight,
+//                 tileWidth,
+//                 tileHeight,
+//               );
+//               break;
+//             case Tile.POWER:
+//               ctx.fillStyle = "green";
+//               ctx.fillRect(
+//                 x * tileWidth,
+//                 y * tileHeight,
+//                 tileWidth,
+//                 tileHeight,
+//               );
+//               break;
+//           }
+//         }
+//       }
+//     },
+//     update: (_) => {},
+//   };
+// }
+
 async function downloadAssets(paths) {
   const cache = {};
 
@@ -24,95 +103,35 @@ async function downloadAssets(paths) {
 }
 
 function startGame(ctx, entities) {
-  let left = false;
-  let right = false;
-  let up = false;
-  let down = false;
-
-  let keyboardActive = false;
-
-  let gamepad = null;
-  let mouse = null;
-  let wheel = null;
-  let click = null;
-
-  const mousemove = (e) => {
-    mouse = getXandY(e);
+  const input = {
+    left: false,
+    right: false,
+    up: false,
+    down: false,
   };
 
-  const leftclick = (e) => {
-    click = getXandY(e);
-  };
+  window.addEventListener("keydown", (e) => {
+    if (e.code === "KeyA") input.left = true;
+    if (e.code === "KeyD") input.right = true;
+    if (e.code === "KeyW") input.up = true;
+    if (e.code === "KeyS") input.down = true;
+  });
 
-  const keydown = (e) => {
-    keyboardActive = true;
-    switch (e.code) {
-      case "KeyA":
-        left = true;
-        break;
-      case "KeyD":
-        right = true;
-        break;
-      case "KeyW":
-        up = true;
-        break;
-      case "KeyS":
-        down = true;
-        break;
-    }
-  };
+  window.addEventListener("keyup", (e) => {
+    if (e.code === "KeyA") input.left = false;
+    if (e.code === "KeyD") input.right = false;
+    if (e.code === "KeyW") input.up = false;
+    if (e.code === "KeyS") input.down = false;
+  });
 
-  const keyup = (e) => {
-    keyboardActive = false;
-    switch (e.code) {
-      case "KeyA":
-        left = false;
-        break;
-      case "KeyD":
-        right = false;
-        break;
-      case "KeyW":
-        up = false;
-        break;
-      case "KeyS":
-        down = false;
-        break;
-    }
-  };
-
-  const getXandY = (e) => {
-    const x = e.clientX - ctx.canvas.getBoundingClientRect().left;
-    const y = e.clientY - ctx.canvas.getBoundingClientRect().top;
-    return { x: x, y: y, radius: 0 };
-  };
-
-  ctx.canvas.addEventListener("mousemove", mousemove, false);
-  ctx.canvas.addEventListener("click", leftclick, false);
-  ctx.canvas.addEventListener("keydown", keydown, false);
-  ctx.canvas.addEventListener("keyup", keyup, false);
-
-  const gameLoop = () => {
-    // update
-    gamepad = navigator.getGamepads()[0];
-    if (gamepad != null && !keyboardActive) {
-      left = gamepad.buttons[14].pressed || gamepad.axes[0] < -0.3;
-      right = gamepad.buttons[15].pressed || gamepad.axes[0] > 0.3;
-      up = gamepad.buttons[12].pressed || gamepad.axes[1] < -0.3;
-      down = gamepad.buttons[13].pressed || gamepad.axes[1] > 0.3;
-    }
-    entities.filter((e) => !e.removeFromWorld).forEach((e) => e.update());
-    entities = entities.filter((e) => !e.removeFromWorld);
-    wheel = 0;
-
-    // draw
+  const loop = () => {
+    entities.forEach((e) => e.update(input));
     ctx.clearRect(0, 0, ctx.canvas.width, ctx.canvas.height);
     entities.forEach((e) => e.draw(ctx));
-    click = null;
-
-    requestAnimationFrame(gameLoop, ctx.canvas);
+    requestAnimationFrame(loop);
   };
 
-  gameLoop();
+  requestAnimationFrame(loop);
 }
 
 async function main() {
@@ -121,10 +140,10 @@ async function main() {
     "./assets/foo.png",
   ]);
 
-  console.log(cache);
-  console.log(failed);
+  // const maze = newMaze();
+  // pacman needs to take in a maze
 
-  startGame(document.getElementById("gameWorld").getContext("2d"), []);
+  startGame(document.getElementById("gameWorld").getContext("2d"), [maze]);
 }
 
 main();
