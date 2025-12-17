@@ -13,6 +13,30 @@ const Dir = {
   DOWN: 3,
 };
 
+const PacmanMode = {
+  Middle1: 0,
+  Open: 1,
+  Middle2: 2,
+  Closed: 3,
+};
+
+function updatePacmanMode(pacman) {
+  switch (pacman.mode) {
+    case PacmanMode.Middle1:
+      pacman.mode = PacmanMode.Open;
+      break;
+    case PacmanMode.Open:
+      pacman.mode = PacmanMode.Middle2;
+      break;
+    case PacmanMode.Middle2:
+      pacman.mode = PacmanMode.Closed;
+      break;
+    case PacmanMode.Closed:
+      pacman.mode = PacmanMode.Middle1;
+      break;
+  }
+}
+
 function newGameState() {
   return {
     grid: [
@@ -67,58 +91,74 @@ function newGameState() {
         Tile.WALL,
       ],
     ],
-    pacman: { x: 1, y: 1, dir: Dir.RIGHT },
+    pacman: { x: 1, y: 1, dir: Dir.RIGHT, mode: PacmanMode.Closed },
   };
 }
 
 function updateGame(gameState, input, update) {
-  // if no update only update pacman direction
-
   const { grid, pacman } = gameState;
   const { left, right, up, down } = input;
 
-  if (left) {
-    pacman.dir = Dir.LEFT;
-  } else if (right) {
-    pacman.dir = Dir.RIGHT;
-  } else if (up) {
-    pacman.dir = Dir.UP;
-  } else if (down) {
-    pacman.dir = Dir.DOWN;
+  const pacmanNewLocations = {
+    [Dir.LEFT]: { x: pacman.x - 1, y: pacman.y },
+    [Dir.RIGHT]: { x: pacman.x + 1, y: pacman.y },
+    [Dir.UP]: { x: pacman.x, y: pacman.y - 1 },
+    [Dir.DOWN]: { x: pacman.x, y: pacman.y + 1 },
+  };
+
+  const leftTile = grid[pacman.y][pacman.x - 1];
+  const rightTile = grid[pacman.y][pacman.x + 1];
+  const upTile = grid[pacman.y - 1][pacman.x];
+  const downTile = grid[pacman.y + 1][pacman.x];
+
+  const isHallway =
+    (leftTile === Tile.WALL &&
+      rightTile === Tile.WALL &&
+      upTile !== Tile.WALL &&
+      downTile !== Tile.WALL) ||
+    (upTile === Tile.WALL &&
+      downTile === Tile.WALL &&
+      leftTile !== Tile.WALL &&
+      rightTile !== Tile.WALL);
+
+  if (isHallway) {
+    // only allow 180's
+    if (left && pacman.dir === Dir.RIGHT) {
+      pacman.dir = Dir.LEFT;
+    } else if (right && pacman.dir === Dir.LEFT) {
+      pacman.dir = Dir.RIGHT;
+    } else if (up && pacman.dir === Dir.DOWN) {
+      pacman.dir = Dir.UP;
+    } else if (down && pacman.dir === Dir.UP) {
+      pacman.dir = Dir.DOWN;
+    }
+  } else {
+    // allow valid directions only (not a wall)
+    if (left && leftTile !== Tile.WALL) {
+      pacman.dir = Dir.LEFT;
+    } else if (right && rightTile !== Tile.WALL) {
+      pacman.dir = Dir.RIGHT;
+    } else if (up && upTile !== Tile.WALL) {
+      pacman.dir = Dir.UP;
+    } else if (down && downTile !== Tile.WALL) {
+      pacman.dir = Dir.DOWN;
+    }
   }
 
   // do not let it move into wall
   // pick up everything else and turn it into floor
   if (update) {
-    switch (pacman.dir) {
-      case Dir.LEFT:
-        if (grid[pacman.y][pacman.x - 1] !== Tile.WALL) {
-          pacman.x -= 1;
-        }
-        break;
-      case Dir.RIGHT:
-        if (grid[pacman.y][pacman.x + 1] !== Tile.WALL) {
-          pacman.x += 1;
-        }
-        break;
-      case Dir.UP:
-        if (grid[pacman.y - 1][pacman.x] !== Tile.WALL) {
-          pacman.y -= 1;
-        }
-        break;
-      case Dir.DOWN:
-        if (grid[pacman.y + 1][pacman.x] !== Tile.WALL) {
-          pacman.y += 1;
-        }
-        break;
+    const { x, y } = pacmanNewLocations[pacman.dir];
+    if (grid[y][x] !== Tile.WALL) {
+      updatePacmanMode(pacman);
+      pacman.x = x;
+      pacman.y = y;
+      grid[pacman.y][pacman.x] = Tile.FLOOR;
     }
   }
-
-  // if pacman is on a (pellet, cherry, or powerup) pick it up
-  grid[pacman.y][pacman.x] = Tile.FLOOR;
 }
 
-function drawGame(gameState, ctx) {
+function drawGame(gameState, ctx, cache) {
   const { grid, pacman } = gameState;
 
   // draw maze
@@ -151,13 +191,48 @@ function drawGame(gameState, ctx) {
     }
   }
 
-  ctx.fillStyle = "yellow";
-  ctx.fillRect(
-    pacman.x * tileWidth,
-    pacman.y * tileHeight,
-    tileWidth / 2,
-    tileHeight / 2,
-  );
+  const drawPacman = (mode) => {
+    const dx = pacman.x * tileWidth;
+    const dy = pacman.y * tileHeight;
+    let sx = 0;
+    let sy = 0;
+    let sw = 0;
+    let sh = 0;
+    switch (mode) {
+      case PacmanMode.Closed:
+        sx = 12;
+        sy = 3;
+        sw = 63;
+        sh = 63;
+        break;
+      case PacmanMode.Middle1:
+      case PacmanMode.Middle2:
+        sx = 85;
+        sy = 3;
+        sw = 60;
+        sh = 62;
+        break;
+      case PacmanMode.Open:
+        sx = 144;
+        sy = 3;
+        sw = 60;
+        sh = 63;
+        break;
+    }
+    ctx.drawImage(
+      cache["./assets/pacman.png"],
+      sx,
+      sy,
+      sw,
+      sh,
+      dx,
+      dy,
+      tileWidth,
+      tileHeight,
+    );
+  };
+
+  drawPacman(pacman.mode);
 }
 
 async function downloadAssets(paths) {
@@ -185,7 +260,7 @@ async function downloadAssets(paths) {
   return { cache, failed };
 }
 
-function startGame(ctx) {
+function startGame(ctx, cache) {
   const gameState = newGameState();
   const input = {
     left: false,
@@ -208,7 +283,7 @@ function startGame(ctx) {
     if (e.code === "KeyS") input.down = false;
   });
 
-  const speed = 500; // increase to slow down game
+  const speed = 200; // increase to slow down game
   let lastUpdate = performance.now();
 
   const loop = (currentTime) => {
@@ -222,7 +297,7 @@ function startGame(ctx) {
 
     // draw game
     ctx.clearRect(0, 0, ctx.canvas.width, ctx.canvas.height);
-    drawGame(gameState, ctx);
+    drawGame(gameState, ctx, cache);
 
     // loop
     requestAnimationFrame(loop);
@@ -234,8 +309,51 @@ function startGame(ctx) {
 
 async function main() {
   const { cache, failed } = await downloadAssets(["./assets/pacman.png"]);
+  failed.forEach((p) => console.log("Could not load: " + p));
   const ctx = document.getElementById("gameWorld").getContext("2d");
-  startGame(ctx);
+  startGame(ctx, cache);
 }
 
 main();
+
+// fill, stroke (for filling vs outlining)
+//
+// rect
+// ctx.fillStyle = "White";
+// ctx.strokeStyle = "White";
+// ctx.fillRect();
+// ctx.beginPath();
+//
+// circle
+// ctx.arc();
+// ctx.stroke();
+//
+// line
+// ctx.beingPath();
+//ctx.moveTo();
+//ctx.lineTo();
+//ctx.stroke();
+//
+// image
+// ctx.drawImage()
+//
+// translation -> move it over
+// reflection -> flop it
+// rotation -> rotate on axis
+//
+// <https://sounddino.com/en/effects/pac-man/>
+//
+// function drawFlippedImage(ctx, img, sx, sy, sw, sh, dx, dy, dw, dh) {
+//   ctx.save();
+//
+//   // move origin to the right edge of the image
+//   ctx.translate(dx + dw, dy);
+//
+//   // flip horizontally
+//   ctx.scale(-1, 1);
+//
+//   // draw at (0, 0) because we translated
+//   ctx.drawImage(img, sx, sy, sw, sh, 0, 0, dw, dh);
+//
+//   ctx.restore();
+// }
