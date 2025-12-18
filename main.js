@@ -158,10 +158,7 @@ function updateGame(gameState, input, update) {
   }
 }
 
-function drawGame(gameState, ctx, cache) {
-  const { grid, pacman } = gameState;
-
-  // draw maze
+function drawMaze(ctx, grid) {
   const tileWidth = ctx.canvas.width / grid[0].length;
   const tileHeight = ctx.canvas.height / grid.length;
   for (let y = 0; y < grid.length; y++) {
@@ -190,100 +187,106 @@ function drawGame(gameState, ctx, cache) {
       }
     }
   }
+}
 
-  const drawPacman = (mode) => {
-    const dx = pacman.x * tileWidth;
-    const dy = pacman.y * tileHeight;
-    let sx = 0;
-    let sy = 0;
-    let sw = 0;
-    let sh = 0;
-    switch (mode) {
-      case PacmanMode.Closed:
-        sx = 12;
-        sy = 3;
-        sw = 63;
-        sh = 63;
-        break;
-      case PacmanMode.Middle1:
-      case PacmanMode.Middle2:
-        sx = 85;
-        sy = 3;
-        sw = 60;
-        sh = 62;
-        break;
-      case PacmanMode.Open:
-        sx = 144;
-        sy = 3;
-        sw = 60;
-        sh = 63;
-        break;
-    }
+function drawPacman(ctx, pacman, grid, cache) {
+  const mode = pacman.mode;
+  const tileWidth = ctx.canvas.width / grid[0].length;
+  const tileHeight = ctx.canvas.height / grid.length;
+  const dx = pacman.x * tileWidth;
+  const dy = pacman.y * tileHeight;
+  let sx = 0;
+  let sy = 0;
+  let sw = 0;
+  let sh = 0;
+  switch (mode) {
+    case PacmanMode.Closed:
+      sx = 12;
+      sy = 3;
+      sw = 63;
+      sh = 63;
+      break;
+    case PacmanMode.Middle1:
+    case PacmanMode.Middle2:
+      sx = 85;
+      sy = 3;
+      sw = 60;
+      sh = 62;
+      break;
+    case PacmanMode.Open:
+      sx = 144;
+      sy = 3;
+      sw = 60;
+      sh = 63;
+      break;
+  }
 
-    ctx.save();
+  ctx.save();
 
-    switch (pacman.dir) {
-      case Dir.DOWN:
-        ctx.rotate(Math.PI / 2);
-        ctx.drawImage(
-          cache["./assets/pacman.png"],
-          sx,
-          sy,
-          sw,
-          sh,
-          dy,
-          -dx - tileWidth,
-          tileHeight,
-          tileWidth,
-        );
-        break;
-      case Dir.LEFT:
-        ctx.scale(-1, 1);
-        ctx.drawImage(
-          cache["./assets/pacman.png"],
-          sx,
-          sy,
-          sw,
-          sh,
-          -dx - tileWidth,
-          dy,
-          tileWidth,
-          tileHeight,
-        );
-        break;
-      case Dir.RIGHT:
-        ctx.drawImage(
-          cache["./assets/pacman.png"],
-          sx,
-          sy,
-          sw,
-          sh,
-          dx,
-          dy,
-          tileWidth,
-          tileHeight,
-        );
-        break;
-      case Dir.UP:
-        ctx.rotate((Math.PI / 2) * 3);
-        ctx.drawImage(
-          cache["./assets/pacman.png"],
-          sx,
-          sy,
-          sw,
-          sh,
-          -dy - tileHeight,
-          dx,
-          tileHeight,
-          tileWidth,
-        );
-        break;
-    }
+  switch (pacman.dir) {
+    case Dir.DOWN:
+      ctx.rotate(Math.PI / 2);
+      ctx.drawImage(
+        cache["./assets/pacman.png"],
+        sx,
+        sy,
+        sw,
+        sh,
+        dy,
+        -dx - tileWidth,
+        tileHeight,
+        tileWidth,
+      );
+      break;
+    case Dir.LEFT:
+      ctx.scale(-1, 1);
+      ctx.drawImage(
+        cache["./assets/pacman.png"],
+        sx,
+        sy,
+        sw,
+        sh,
+        -dx - tileWidth,
+        dy,
+        tileWidth,
+        tileHeight,
+      );
+      break;
+    case Dir.RIGHT:
+      ctx.drawImage(
+        cache["./assets/pacman.png"],
+        sx,
+        sy,
+        sw,
+        sh,
+        dx,
+        dy,
+        tileWidth,
+        tileHeight,
+      );
+      break;
+    case Dir.UP:
+      ctx.rotate((Math.PI / 2) * 3);
+      ctx.drawImage(
+        cache["./assets/pacman.png"],
+        sx,
+        sy,
+        sw,
+        sh,
+        -dy - tileHeight,
+        dx,
+        tileHeight,
+        tileWidth,
+      );
+      break;
+  }
+  ctx.restore();
+}
 
-    ctx.restore();
-  };
-
-  drawPacman(pacman.mode);
+function drawGame(gameState, ctx, cache) {
+  const { grid, pacman } = gameState;
+  drawMaze(ctx, grid);
+  drawPacman(ctx, pacman, grid, cache);
 }
 
 async function downloadAssets(paths) {
