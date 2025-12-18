@@ -219,17 +219,68 @@ function drawGame(gameState, ctx, cache) {
         sh = 63;
         break;
     }
-    ctx.drawImage(
-      cache["./assets/pacman.png"],
-      sx,
-      sy,
-      sw,
-      sh,
-      dx,
-      dy,
-      tileWidth,
-      tileHeight,
-    );
+
+    ctx.save();
+
+    switch (pacman.dir) {
+      case Dir.DOWN:
+        ctx.rotate(Math.PI / 2);
+        ctx.drawImage(
+          cache["./assets/pacman.png"],
+          sx,
+          sy,
+          sw,
+          sh,
+          dy,
+          -dx - tileWidth,
+          tileHeight,
+          tileWidth,
+        );
+        break;
+      case Dir.LEFT:
+        ctx.scale(-1, 1);
+        ctx.drawImage(
+          cache["./assets/pacman.png"],
+          sx,
+          sy,
+          sw,
+          sh,
+          -dx - tileWidth,
+          dy,
+          tileWidth,
+          tileHeight,
+        );
+        break;
+      case Dir.RIGHT:
+        ctx.drawImage(
+          cache["./assets/pacman.png"],
+          sx,
+          sy,
+          sw,
+          sh,
+          dx,
+          dy,
+          tileWidth,
+          tileHeight,
+        );
+        break;
+      case Dir.UP:
+        ctx.rotate((Math.PI / 2) * 3);
+        ctx.drawImage(
+          cache["./assets/pacman.png"],
+          sx,
+          sy,
+          sw,
+          sh,
+          -dy - tileHeight,
+          dx,
+          tileHeight,
+          tileWidth,
+        );
+        break;
+    }
+
+    ctx.restore();
   };
 
   drawPacman(pacman.mode);
@@ -360,4 +411,9 @@ main();
 //   ctx.restore();
 // }
 //
+// (how to flip image)
 //
+// ctx.save();
+// ctx.scale(-1, 1);
+// (draw the image) (-100 4th to last arg) ()
+// ctx.restore();
