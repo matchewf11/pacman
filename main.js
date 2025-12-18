@@ -341,6 +341,8 @@ main();
 // reflection -> flop it
 // rotation -> rotate on axis
 //
+// ctx.drawImage(spritesheet, 0, 0);
+//
 // <https://sounddino.com/en/effects/pac-man/>
 //
 // function drawFlippedImage(ctx, img, sx, sy, sw, sh, dx, dy, dw, dh) {
@@ -357,3 +359,5 @@ main();
 //
 //   ctx.restore();
 // }
+//
+//
